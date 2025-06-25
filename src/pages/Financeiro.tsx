@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCRM, ContaFinanceira } from '@/contexts/CRMContext';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Edit, Trash2, DollarSign, TrendingUp, TrendingDown, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, TrendingUp, TrendingDown, CheckCircle, Clock } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
 const Financeiro = () => {
@@ -60,12 +59,13 @@ const Financeiro = () => {
   });
 
   const abrirDialog = (conta?: ContaFinanceira) => {
+    console.log('Abrindo dialog', conta);
     if (conta) {
       setEditingConta(conta);
       setFormData({
         tipo: conta.tipo,
         descricao: conta.descricao,
-        valor: conta.valor.toString(),
+        valor: conta.valor.toString().replace('.', ','),
         dataVencimento: conta.dataVencimento.split('T')[0],
         ordemServicoId: conta.ordemServicoId || ''
       });
@@ -84,31 +84,60 @@ const Financeiro = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Enviando formulário', formData);
+    
+    if (!formData.descricao || !formData.valor || !formData.dataVencimento) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const valorNumerico = parseFloat(formData.valor.replace(',', '.'));
+    if (isNaN(valorNumerico) || valorNumerico <= 0) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira um valor válido.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const contaData = {
       tipo: formData.tipo,
       descricao: formData.descricao,
-      valor: parseFloat(formData.valor.replace(',', '.')),
+      valor: valorNumerico,
       dataVencimento: new Date(formData.dataVencimento).toISOString(),
       status: 'pendente' as const,
       ordemServicoId: formData.ordemServicoId || undefined
     };
     
-    if (editingConta) {
-      atualizarContaFinanceira(editingConta.id, contaData);
+    try {
+      if (editingConta) {
+        atualizarContaFinanceira(editingConta.id, contaData);
+        toast({
+          title: "Conta atualizada",
+          description: "A conta foi atualizada com sucesso."
+        });
+      } else {
+        adicionarContaFinanceira(contaData);
+        toast({
+          title: "Conta cadastrada",
+          description: "A conta foi cadastrada com sucesso."
+        });
+      }
+      
+      setDialogOpen(false);
+    } catch (error) {
+      console.error('Erro ao salvar conta:', error);
       toast({
-        title: "Conta atualizada",
-        description: "A conta foi atualizada com sucesso."
-      });
-    } else {
-      adicionarContaFinanceira(contaData);
-      toast({
-        title: "Conta cadastrada",
-        description: "A conta foi cadastrada com sucesso."
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar a conta.",
+        variant: "destructive"
       });
     }
-    
-    setDialogOpen(false);
   };
 
   const marcarComoPaga = (conta: ContaFinanceira) => {
@@ -155,21 +184,21 @@ const Financeiro = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Financeiro</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Financeiro</h1>
           <p className="text-muted-foreground">Controle de contas a pagar e receber</p>
         </div>
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => abrirDialog()}>
+            <Button onClick={() => abrirDialog()} className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Nova Conta
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingConta ? 'Editar Conta' : 'Nova Conta'}
@@ -187,10 +216,9 @@ const Financeiro = () => {
                 <Select
                   value={formData.tipo}
                   onValueChange={(value: 'pagar' | 'receber') => setFormData({ ...formData, tipo: value })}
-                  required
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="receber">Conta a Receber</SelectItem>
@@ -206,7 +234,6 @@ const Financeiro = () => {
                   value={formData.descricao}
                   onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                   placeholder="Descrição da conta"
-                  required
                 />
               </div>
               
@@ -220,7 +247,6 @@ const Financeiro = () => {
                     setFormData({ ...formData, valor: valorFormatado });
                   }}
                   placeholder="0,00"
-                  required
                 />
               </div>
               
@@ -231,7 +257,6 @@ const Financeiro = () => {
                   type="date"
                   value={formData.dataVencimento}
                   onChange={(e) => setFormData({ ...formData, dataVencimento: e.target.value })}
-                  required
                 />
               </div>
               
@@ -255,11 +280,11 @@ const Financeiro = () => {
                 </Select>
               </div>
               
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   {editingConta ? 'Atualizar' : 'Cadastrar'}
                 </Button>
               </div>
@@ -269,44 +294,44 @@ const Financeiro = () => {
       </div>
 
       {/* Resumo Financeiro */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">A Receber</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">A Receber</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-lg sm:text-2xl font-bold text-green-600">
               R$ {totalReceber.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">
-              {contasReceber.filter(c => c.status === 'pendente').length} conta(s) pendente(s)
+              {contasReceber.filter(c => c.status === 'pendente').length} conta(s)
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">A Pagar</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">A Pagar</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-lg sm:text-2xl font-bold text-red-600">
               R$ {totalPagar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">
-              {contasPagar.filter(c => c.status === 'pendente').length} conta(s) pendente(s)
+              {contasPagar.filter(c => c.status === 'pendente').length} conta(s)
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receber Vencido</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Receber Vencido</CardTitle>
             <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-lg sm:text-2xl font-bold text-orange-600">
               R$ {totalReceberVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -317,11 +342,11 @@ const Financeiro = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pagar Vencido</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Pagar Vencido</CardTitle>
             <Clock className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-lg sm:text-2xl font-bold text-red-600">
               R$ {totalPagarVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -332,59 +357,63 @@ const Financeiro = () => {
       </div>
 
       <Tabs defaultValue="todas" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="todas">Todas as Contas</TabsTrigger>
-          <TabsTrigger value="receber">A Receber</TabsTrigger>
-          <TabsTrigger value="pagar">A Pagar</TabsTrigger>
-          <TabsTrigger value="vencidas">Vencidas</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="todas" className="text-xs sm:text-sm">Todas</TabsTrigger>
+          <TabsTrigger value="receber" className="text-xs sm:text-sm">A Receber</TabsTrigger>
+          <TabsTrigger value="pagar" className="text-xs sm:text-sm">A Pagar</TabsTrigger>
+          <TabsTrigger value="vencidas" className="text-xs sm:text-sm">Vencidas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="todas" className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Todas as Contas</CardTitle>
-              <CardDescription>
-                {contasFinanceiras.length} conta(s) cadastrada(s)
-              </CardDescription>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
+            <CardHeader className="space-y-4">
+              <div>
+                <CardTitle>Todas as Contas</CardTitle>
+                <CardDescription>
+                  {contasFinanceiras.length} conta(s) cadastrada(s)
+                </CardDescription>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <div className="flex items-center space-x-2 flex-1">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar contas..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
+                    className="flex-1"
                   />
                 </div>
-                <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="receber">A Receber</SelectItem>
-                    <SelectItem value="pagar">A Pagar</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={statusFiltro} onValueChange={setStatusFiltro}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="pendente">Pendente</SelectItem>
-                    <SelectItem value="paga">Paga</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
+                    <SelectTrigger className="w-full sm:w-[130px]">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="receber">A Receber</SelectItem>
+                      <SelectItem value="pagar">A Pagar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFiltro} onValueChange={setStatusFiltro}>
+                    <SelectTrigger className="w-full sm:w-[130px]">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="pendente">Pendente</SelectItem>
+                      <SelectItem value="paga">Paga</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {contasFiltradas.map((conta) => (
-                  <div key={conta.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{conta.descricao}</h3>
+                  <div key={conta.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h3 className="font-semibold truncate">{conta.descricao}</h3>
                         <Badge variant={conta.tipo === 'receber' ? 'default' : 'secondary'}>
                           {conta.tipo === 'receber' ? 'A Receber' : 'A Pagar'}
                         </Badge>
@@ -402,40 +431,42 @@ const Financeiro = () => {
                       </div>
                     </div>
                     
-                    <div className="text-right">
-                      <p className={`text-lg font-bold ${conta.tipo === 'receber' ? 'text-green-600' : 'text-red-600'}`}>
-                        R$ {conta.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 ml-4">
-                      {conta.status === 'pendente' && (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div className="text-center sm:text-right">
+                        <p className={`text-lg font-bold ${conta.tipo === 'receber' ? 'text-green-600' : 'text-red-600'}`}>
+                          R$ {conta.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 justify-center sm:justify-end">
+                        {conta.status === 'pendente' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => marcarComoPaga(conta)}
+                            className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => marcarComoPaga(conta)}
-                          className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                          onClick={() => abrirDialog(conta)}
                         >
-                          <CheckCircle className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Button>
-                      )}
-                      
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => abrirDialog(conta)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(conta)}
-                        className="text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(conta)}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
