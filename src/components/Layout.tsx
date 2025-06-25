@@ -15,14 +15,14 @@ const Layout = ({ children }: LayoutProps) => {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <main className="flex-1 flex flex-col">
-          <header className="h-16 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
-            <SidebarTrigger className="md:hidden" />
-            <div className="flex items-center gap-2">
+          <header className="h-14 sm:h-16 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 sm:px-4">
+            <SidebarTrigger className="lg:hidden" />
+            <div className="flex items-center gap-1 sm:gap-2">
               <NotificationBell />
               <ThemeToggle />
             </div>
           </header>
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-3 sm:p-4 lg:p-6">
             {children}
           </div>
         </main>

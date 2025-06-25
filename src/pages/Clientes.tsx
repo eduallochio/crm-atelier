@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -149,21 +148,22 @@ const Clientes = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6 max-w-full overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Clientes</h1>
-          <p className="text-muted-foreground">Gerencie seus clientes</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Clientes</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Gerencie seus clientes</p>
         </div>
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => abrirDialog()}>
+            <Button onClick={() => abrirDialog()} className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
-              Novo Cliente
+              <span className="hidden xs:inline">Novo Cliente</span>
+              <span className="xs:hidden">Novo</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] mx-4 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingCliente ? 'Editar Cliente' : 'Novo Cliente'}
@@ -220,11 +220,11 @@ const Clientes = () => {
                 />
               </div>
               
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   {editingCliente ? 'Atualizar' : 'Cadastrar'}
                 </Button>
               </div>
@@ -234,94 +234,98 @@ const Clientes = () => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Clientes</CardTitle>
-          <CardDescription>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl">Lista de Clientes</CardTitle>
+          <CardDescription className="text-sm">
             {clientesFiltrados.length} de {clientes.length} cliente(s)
           </CardDescription>
           
           <SearchFilter
-            searchPlaceholder="Buscar clientes por nome, telefone ou email..."
+            searchPlaceholder="Buscar clientes..."
             filters={filterOptions}
             onSearch={setSearchTerm}
             onFilter={setFilters}
             onClear={clearFilters}
           />
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="p-3 sm:p-6">
+          <div className="space-y-3 sm:space-y-4">
             {clientesFiltrados.map((cliente) => (
-              <div key={cliente.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-lg">{cliente.nome}</h3>
-                    <Badge variant="outline" className="text-xs">
+              <div key={cliente.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors gap-3 sm:gap-0">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                    <h3 className="font-semibold text-base sm:text-lg truncate">{cliente.nome}</h3>
+                    <Badge variant="outline" className="text-xs w-fit">
                       Cliente desde {new Date(cliente.dataCadastro).toLocaleDateString('pt-BR')}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Phone className="h-4 w-4" />
-                      {cliente.telefone}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-1 sm:gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1 truncate">
+                      <Phone className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span className="truncate">{cliente.telefone}</span>
                     </div>
                     {cliente.email && (
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-4 w-4" />
-                        {cliente.email}
+                      <div className="flex items-center gap-1 truncate">
+                        <Mail className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="truncate">{cliente.email}</span>
                       </div>
                     )}
                     {cliente.endereco && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        {cliente.endereco.substring(0, 30)}...
+                      <div className="flex items-center gap-1 truncate">
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="truncate">{cliente.endereco.substring(0, 30)}...</span>
                       </div>
                     )}
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 justify-end sm:justify-start">
                   <Button
                     size="sm"
                     onClick={() => abrirWhatsApp(cliente.telefone, cliente.nome)}
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0"
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline ml-2">WhatsApp</span>
                   </Button>
                   
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => abrirDialog(cliente)}
+                    className="flex-shrink-0"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline ml-2">Editar</span>
                   </Button>
                   
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => handleDelete(cliente)}
-                    className="text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:bg-destructive/10 flex-shrink-0"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline ml-2">Excluir</span>
                   </Button>
                 </div>
               </div>
             ))}
             
             {clientesFiltrados.length === 0 && (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg font-medium mb-2">
+              <div className="text-center py-8 sm:py-12">
+                <Users className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-base sm:text-lg font-medium mb-2">
                   {searchTerm || Object.keys(filters).length > 0 ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
                 </p>
-                <p className="text-muted-foreground mb-4">
+                <p className="text-muted-foreground mb-4 text-sm sm:text-base px-4">
                   {searchTerm || Object.keys(filters).length > 0 
                     ? 'Tente ajustar os filtros de busca.' 
                     : 'Comece cadastrando seu primeiro cliente.'
                   }
                 </p>
                 {!searchTerm && Object.keys(filters).length === 0 && (
-                  <Button onClick={() => abrirDialog()}>
+                  <Button onClick={() => abrirDialog()} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
                     Cadastrar Primeiro Cliente
                   </Button>
