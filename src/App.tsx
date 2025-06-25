@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { CRMProvider } from "./contexts/CRMContext";
+import { ThemeProvider } from "./components/ThemeProvider";
+import { NotificationProvider } from "./components/NotificationSystem";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -27,35 +29,39 @@ const AuthenticatedApp = () => {
 
   return (
     <CRMProvider>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/servicos" element={<Servicos />} />
-          <Route path="/ordens-servico" element={<OrdensServico />} />
-          <Route path="/financeiro" element={<Financeiro />} />
-          <Route path="/caixa" element={<Caixa />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Layout>
+      <NotificationProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/clientes" element={<Clientes />} />
+            <Route path="/servicos" element={<Servicos />} />
+            <Route path="/ordens-servico" element={<OrdensServico />} />
+            <Route path="/financeiro" element={<Financeiro />} />
+            <Route path="/caixa" element={<Caixa />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
+      </NotificationProvider>
     </CRMProvider>
   );
 };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/*" element={<AuthenticatedApp />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/*" element={<AuthenticatedApp />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

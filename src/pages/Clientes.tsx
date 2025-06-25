@@ -8,13 +8,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { useCRM, Cliente } from '@/contexts/CRMContext';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, MessageCircle, Edit, Trash2 } from 'lucide-react';
+import { useNotifications } from '@/components/NotificationSystem';
+import { Plus, MessageCircle, Edit, Trash2, Phone, Mail, MapPin } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import SearchFilter from '@/components/SearchFilter';
 
 const Clientes = () => {
   const { clientes, adicionarCliente, atualizarCliente, excluirCliente } = useCRM();
   const { toast } = useToast();
+  const { addNotification } = useNotifications();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<Record<string, string>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [formData, setFormData] = useState({
@@ -24,11 +28,51 @@ const Clientes = () => {
     endereco: ''
   });
 
-  const clientesFiltrados = clientes.filter(cliente =>
-    cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.telefone.includes(searchTerm) ||
-    cliente.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filterOptions = [
+    {
+      key: 'periodo',
+      label: 'Período de Cadastro',
+      options: [
+        { value: 'hoje', label: 'Hoje' },
+        { value: 'semana', label: 'Esta Semana' },
+        { value: 'mes', label: 'Este Mês' },
+        { value: 'ano', label: 'Este Ano' },
+      ]
+    },
+  ];
+
+  const clientesFiltrados = clientes.filter(cliente => {
+    // Filtro de busca
+    const matchSearch = cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cliente.telefone.includes(searchTerm) ||
+      cliente.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (!matchSearch) return false;
+
+    // Filtro de período
+    if (filters.periodo) {
+      const cadastro = new Date(cliente.dataCadastro);
+      const hoje = new Date();
+      
+      switch (filters.periodo) {
+        case 'hoje':
+          if (cadastro.toDateString() !== hoje.toDateString()) return false;
+          break;
+        case 'semana':
+          const semanaAtras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (cadastro < semanaAtras) return false;
+          break;
+        case 'mes':
+          if (cadastro.getMonth() !== hoje.getMonth() || cadastro.getFullYear() !== hoje.getFullYear()) return false;
+          break;
+        case 'ano':
+          if (cadastro.getFullYear() !== hoje.getFullYear()) return false;
+          break;
+      }
+    }
+
+    return true;
+  });
 
   const abrirDialog = (cliente?: Cliente) => {
     if (cliente) {
@@ -55,11 +99,21 @@ const Clientes = () => {
         title: "Cliente atualizado",
         description: `${formData.nome} foi atualizado com sucesso.`
       });
+      addNotification({
+        type: 'success',
+        title: 'Cliente Atualizado',
+        message: `${formData.nome} foi atualizado com sucesso.`
+      });
     } else {
       adicionarCliente(formData);
       toast({
         title: "Cliente cadastrado",
         description: `${formData.nome} foi cadastrado com sucesso.`
+      });
+      addNotification({
+        type: 'success',
+        title: 'Novo Cliente',
+        message: `${formData.nome} foi cadastrado com sucesso.`
       });
     }
     
@@ -74,6 +128,11 @@ const Clientes = () => {
         title: "Cliente excluído",
         description: `${cliente.nome} foi excluído com sucesso.`
       });
+      addNotification({
+        type: 'info',
+        title: 'Cliente Excluído',
+        message: `${cliente.nome} foi removido do sistema.`
+      });
     }
   };
 
@@ -82,6 +141,11 @@ const Clientes = () => {
     const mensagem = encodeURIComponent(`Olá ${nome}! Como posso ajudá-la hoje?`);
     const url = `https://wa.me/55${numeroLimpo}?text=${mensagem}`;
     window.open(url, '_blank');
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilters({});
   };
 
   return (
@@ -173,42 +237,53 @@ const Clientes = () => {
         <CardHeader>
           <CardTitle>Lista de Clientes</CardTitle>
           <CardDescription>
-            {clientes.length} cliente(s) cadastrado(s)
+            {clientesFiltrados.length} de {clientes.length} cliente(s)
           </CardDescription>
-          <div className="flex items-center space-x-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar clientes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
+          
+          <SearchFilter
+            searchPlaceholder="Buscar clientes por nome, telefone ou email..."
+            filters={filterOptions}
+            onSearch={setSearchTerm}
+            onFilter={setFilters}
+            onClear={clearFilters}
+          />
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {clientesFiltrados.map((cliente) => (
-              <div key={cliente.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50">
+              <div key={cliente.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold">{cliente.nome}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-semibold text-lg">{cliente.nome}</h3>
                     <Badge variant="outline" className="text-xs">
                       Cliente desde {new Date(cliente.dataCadastro).toLocaleDateString('pt-BR')}
                     </Badge>
                   </div>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p>📱 {cliente.telefone}</p>
-                    {cliente.email && <p>📧 {cliente.email}</p>}
-                    {cliente.endereco && <p>📍 {cliente.endereco}</p>}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Phone className="h-4 w-4" />
+                      {cliente.telefone}
+                    </div>
+                    {cliente.email && (
+                      <div className="flex items-center gap-1">
+                        <Mail className="h-4 w-4" />
+                        {cliente.email}
+                      </div>
+                    )}
+                    {cliente.endereco && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {cliente.endereco.substring(0, 30)}...
+                      </div>
+                    )}
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-2">
                   <Button
                     size="sm"
-                    variant="outline"
                     onClick={() => abrirWhatsApp(cliente.telefone, cliente.nome)}
-                    className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                    className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     <MessageCircle className="h-4 w-4" />
                   </Button>
@@ -234,10 +309,23 @@ const Clientes = () => {
             ))}
             
             {clientesFiltrados.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  {searchTerm ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado ainda.'}
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-medium mb-2">
+                  {searchTerm || Object.keys(filters).length > 0 ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
                 </p>
+                <p className="text-muted-foreground mb-4">
+                  {searchTerm || Object.keys(filters).length > 0 
+                    ? 'Tente ajustar os filtros de busca.' 
+                    : 'Comece cadastrando seu primeiro cliente.'
+                  }
+                </p>
+                {!searchTerm && Object.keys(filters).length === 0 && (
+                  <Button onClick={() => abrirDialog()}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Cadastrar Primeiro Cliente
+                  </Button>
+                )}
               </div>
             )}
           </div>
