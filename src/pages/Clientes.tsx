@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCRM, Cliente } from '@/contexts/CRMContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/components/NotificationSystem';
-import { Plus, MessageCircle, Edit, Trash2, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, MessageCircle, Edit, Trash2, Phone, Mail, MapPin, Users } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import SearchFilter from '@/components/SearchFilter';
 
