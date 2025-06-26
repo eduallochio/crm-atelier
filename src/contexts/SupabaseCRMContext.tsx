@@ -147,7 +147,8 @@ export const SupabaseCRMProvider: React.FC<{ children: ReactNode }> = ({ childre
     
     const ordensFormatted = data?.map(ordem => ({
       ...ordem,
-      cliente: ordem.cliente as Cliente
+      cliente: ordem.cliente as Cliente,
+      status: (ordem.status || 'pendente') as 'pendente' | 'em_andamento' | 'concluida' | 'cancelada'
     })) || [];
     
     setOrdensServico(ordensFormatted);
