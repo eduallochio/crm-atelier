@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useCRM } from "@/contexts/CRMContext";
+import { useSupabaseCRM } from "@/contexts/SupabaseCRMContext";
 import { useNotifications } from "@/components/NotificationSystem";
 import { Users, FileText, DollarSign, TrendingUp, Clock, CheckCircle, Package, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -11,7 +11,7 @@ import MetricCard from "@/components/MetricCard";
 import DashboardChart from "@/components/DashboardChart";
 
 const Dashboard = () => {
-  const { clientes, ordensServico, contasFinanceiras, saldoCaixa } = useCRM();
+  const { clientes, ordensServico, loading } = useSupabaseCRM();
   const { addNotification } = useNotifications();
 
   // Estatísticas básicas
@@ -19,21 +19,13 @@ const Dashboard = () => {
   const ordensAbertas = ordensServico.filter(os => os.status !== 'concluida' && os.status !== 'cancelada').length;
   const ordensHoje = ordensServico.filter(os => {
     const hoje = new Date().toDateString();
-    return new Date(os.dataAbertura).toDateString() === hoje;
-  }).length;
-  
-  const contasVencidas = contasFinanceiras.filter(conta => {
-    if (conta.status === 'paga') return false;
-    return new Date(conta.dataVencimento) < new Date();
+    return new Date(os.data_abertura).toDateString() === hoje;
   }).length;
 
-  const totalReceber = contasFinanceiras
-    .filter(conta => conta.tipo === 'receber' && conta.status === 'pendente')
-    .reduce((total, conta) => total + conta.valor, 0);
-
-  const totalPagar = contasFinanceiras
-    .filter(conta => conta.tipo === 'pagar' && conta.status === 'pendente')
-    .reduce((total, conta) => total + conta.valor, 0);
+  const totalReceber = 15000; // Mock data - será implementado depois
+  const totalPagar = 8500; // Mock data - será implementado depois
+  const saldoCaixa = 25000; // Mock data - será implementado depois
+  const contasVencidas = 3; // Mock data - será implementado depois
 
   // Dados para gráficos
   const faturamentoMensal = [
@@ -80,6 +72,17 @@ const Dashboard = () => {
       });
     }
   }, [contasVencidas, ordensHoje, addNotification]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Carregando dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -199,7 +202,7 @@ const Dashboard = () => {
                 <div className="flex-1">
                   <p className="font-medium">{ordem.cliente.nome}</p>
                   <p className="text-sm text-muted-foreground">
-                    OS #{ordem.id.slice(-4)} • {ordem.servicos.length} serviços
+                    OS #{ordem.id.slice(-4)} • {new Date(ordem.data_abertura).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="text-right">
@@ -213,7 +216,7 @@ const Dashboard = () => {
                     {ordem.status.replace('_', ' ')}
                   </Badge>
                   <p className="text-sm font-medium mt-1">
-                    R$ {ordem.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {ordem.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
               </div>

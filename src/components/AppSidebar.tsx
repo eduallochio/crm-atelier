@@ -10,7 +10,7 @@ import {
   LogOut
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
 
 import {
   Sidebar,
@@ -29,7 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Serviços", url: "/servicos", icon: Scissors },
   { title: "Ordens de Serviço", url: "/ordens-servico", icon: FileText },
@@ -40,7 +40,7 @@ const menuItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { profile, signOut } = useAuth();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
 
@@ -91,13 +91,13 @@ export function AppSidebar() {
         {!collapsed && (
           <div className="space-y-2">
             <div className="text-sm">
-              <p className="font-medium">{user?.name}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <p className="font-medium">{profile?.full_name}</p>
+              <p className="text-xs text-muted-foreground">{profile?.email}</p>
             </div>
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={logout}
+              onClick={signOut}
               className="w-full"
             >
               <LogOut className="mr-2 h-4 w-4" />
@@ -106,7 +106,7 @@ export function AppSidebar() {
           </div>
         )}
         {collapsed && (
-          <Button variant="outline" size="sm" onClick={logout}>
+          <Button variant="outline" size="sm" onClick={signOut}>
             <LogOut className="h-4 w-4" />
           </Button>
         )}
