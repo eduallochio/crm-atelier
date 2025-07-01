@@ -7,10 +7,12 @@ import {
   CreditCard, 
   Wallet, 
   Home,
-  LogOut
+  LogOut,
+  User
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { useCustomization } from "@/contexts/CustomizationContext";
 
 import {
   Sidebar,
@@ -35,12 +37,14 @@ const menuItems = [
   { title: "Ordens de Serviço", url: "/ordens-servico", icon: FileText },
   { title: "Financeiro", url: "/financeiro", icon: CreditCard },
   { title: "Caixa", url: "/caixa", icon: Wallet },
+  { title: "Perfil", url: "/profile", icon: User },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { profile, signOut } = useAuth();
+  const { settings } = useCustomization();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
 
@@ -53,15 +57,33 @@ export function AppSidebar() {
       <SidebarHeader className="border-b p-4">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <Scissors className="h-8 w-8 text-primary" />
+            {settings?.logo_url ? (
+              <img 
+                src={settings.logo_url} 
+                alt="Logo" 
+                className="h-8 w-8 object-contain"
+              />
+            ) : (
+              <Scissors className="h-8 w-8 text-primary" />
+            )}
             <div>
-              <h2 className="font-bold text-lg">Atelier CRM</h2>
+              <h2 className="font-bold text-lg">
+                {settings?.atelier_name || 'Atelier CRM'}
+              </h2>
               <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
             </div>
           </div>
         )}
         {collapsed && (
-          <Scissors className="h-8 w-8 text-primary mx-auto" />
+          settings?.logo_url ? (
+            <img 
+              src={settings.logo_url} 
+              alt="Logo" 
+              className="h-8 w-8 object-contain mx-auto"
+            />
+          ) : (
+            <Scissors className="h-8 w-8 text-primary mx-auto" />
+          )
         )}
       </SidebarHeader>
 
