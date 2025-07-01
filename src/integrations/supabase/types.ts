@@ -15,7 +15,6 @@ export type Database = {
           created_at: string
           id: string
           logo_url: string | null
-          organization_id: string
           primary_color: string | null
           updated_at: string
         }
@@ -24,7 +23,6 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
-          organization_id: string
           primary_color?: string | null
           updated_at?: string
         }
@@ -33,19 +31,10 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
-          organization_id?: string
           primary_color?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "customization_settings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       org_clients: {
         Row: {
@@ -55,7 +44,6 @@ export type Database = {
           endereco: string | null
           id: string
           nome: string
-          organization_id: string
           telefone: string
         }
         Insert: {
@@ -65,7 +53,6 @@ export type Database = {
           endereco?: string | null
           id?: string
           nome: string
-          organization_id: string
           telefone: string
         }
         Update: {
@@ -75,18 +62,9 @@ export type Database = {
           endereco?: string | null
           id?: string
           nome?: string
-          organization_id?: string
           telefone?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "org_clients_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       org_service_orders: {
         Row: {
@@ -97,7 +75,6 @@ export type Database = {
           data_prevista: string | null
           id: string
           observacoes: string | null
-          organization_id: string
           status: string | null
           valor_total: number
         }
@@ -109,7 +86,6 @@ export type Database = {
           data_prevista?: string | null
           id?: string
           observacoes?: string | null
-          organization_id: string
           status?: string | null
           valor_total?: number
         }
@@ -121,7 +97,6 @@ export type Database = {
           data_prevista?: string | null
           id?: string
           observacoes?: string | null
-          organization_id?: string
           status?: string | null
           valor_total?: number
         }
@@ -133,13 +108,6 @@ export type Database = {
             referencedRelation: "org_clients"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "org_service_orders_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
         ]
       }
       org_services: {
@@ -148,7 +116,6 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
-          organization_id: string
           tipo: string
           valor: number
         }
@@ -157,7 +124,6 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
-          organization_id: string
           tipo: string
           valor: number
         }
@@ -166,19 +132,10 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
-          organization_id?: string
           tipo?: string
           valor?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "org_services_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       organizations: {
         Row: {

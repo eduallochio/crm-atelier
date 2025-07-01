@@ -51,7 +51,8 @@ export const CustomizationProvider: React.FC<CustomizationProviderProps> = ({ ch
       const { data, error } = await supabase
         .from('customization_settings')
         .select('*')
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         throw error;
@@ -68,7 +69,7 @@ export const CustomizationProvider: React.FC<CustomizationProviderProps> = ({ ch
 
         const { data: newData, error: insertError } = await supabase
           .from('customization_settings')
-          .insert([defaultSettings])
+          .insert(defaultSettings)
           .select()
           .single();
 

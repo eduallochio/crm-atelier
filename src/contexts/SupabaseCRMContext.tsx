@@ -129,7 +129,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
   const addClient = async (client: Omit<Client, 'id' | 'data_cadastro'>) => {
     const { error } = await supabase
       .from('org_clients')
-      .insert([client]);
+      .insert(client);
 
     if (error) throw error;
     await fetchClients();
@@ -158,7 +158,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
   const addService = async (service: Omit<Service, 'id'>) => {
     const { error } = await supabase
       .from('org_services')
-      .insert([service]);
+      .insert(service);
 
     if (error) throw error;
     await fetchServices();
@@ -187,7 +187,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
   const addServiceOrder = async (order: Omit<ServiceOrder, 'id' | 'data_abertura'>) => {
     const { error } = await supabase
       .from('org_service_orders')
-      .insert([order]);
+      .insert(order);
 
     if (error) throw error;
     await fetchServiceOrders();
