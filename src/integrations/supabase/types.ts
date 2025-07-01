@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customization_settings: {
+        Row: {
+          atelier_name: string
+          created_at: string
+          id: string
+          logo_url: string | null
+          organization_id: string
+          primary_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          atelier_name: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          organization_id: string
+          primary_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          atelier_name?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          organization_id?: string
+          primary_color?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_clients: {
         Row: {
           created_at: string
