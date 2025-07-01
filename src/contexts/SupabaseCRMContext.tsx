@@ -95,7 +95,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const fetchClients = async () => {
     const { data, error } = await supabase
-      .from('clients')
+      .from('org_clients')
       .select('*')
       .order('data_cadastro', { ascending: false });
 
@@ -105,7 +105,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const fetchServices = async () => {
     const { data, error } = await supabase
-      .from('services')
+      .from('org_services')
       .select('*')
       .order('nome');
 
@@ -115,10 +115,10 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const fetchServiceOrders = async () => {
     const { data, error } = await supabase
-      .from('service_orders')
+      .from('org_service_orders')
       .select(`
         *,
-        client:clients(*)
+        client:org_clients(*)
       `)
       .order('data_abertura', { ascending: false });
 
@@ -128,7 +128,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const addClient = async (client: Omit<Client, 'id' | 'data_cadastro'>) => {
     const { error } = await supabase
-      .from('clients')
+      .from('org_clients')
       .insert([client]);
 
     if (error) throw error;
@@ -137,7 +137,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const updateClient = async (id: string, client: Partial<Client>) => {
     const { error } = await supabase
-      .from('clients')
+      .from('org_clients')
       .update(client)
       .eq('id', id);
 
@@ -147,7 +147,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const deleteClient = async (id: string) => {
     const { error } = await supabase
-      .from('clients')
+      .from('org_clients')
       .delete()
       .eq('id', id);
 
@@ -157,7 +157,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const addService = async (service: Omit<Service, 'id'>) => {
     const { error } = await supabase
-      .from('services')
+      .from('org_services')
       .insert([service]);
 
     if (error) throw error;
@@ -166,7 +166,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const updateService = async (id: string, service: Partial<Service>) => {
     const { error } = await supabase
-      .from('services')
+      .from('org_services')
       .update(service)
       .eq('id', id);
 
@@ -176,7 +176,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const deleteService = async (id: string) => {
     const { error } = await supabase
-      .from('services')
+      .from('org_services')
       .delete()
       .eq('id', id);
 
@@ -186,7 +186,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const addServiceOrder = async (order: Omit<ServiceOrder, 'id' | 'data_abertura'>) => {
     const { error } = await supabase
-      .from('service_orders')
+      .from('org_service_orders')
       .insert([order]);
 
     if (error) throw error;
@@ -195,7 +195,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const updateServiceOrder = async (id: string, order: Partial<ServiceOrder>) => {
     const { error } = await supabase
-      .from('service_orders')
+      .from('org_service_orders')
       .update(order)
       .eq('id', id);
 
@@ -205,7 +205,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
 
   const deleteServiceOrder = async (id: string) => {
     const { error } = await supabase
-      .from('service_orders')
+      .from('org_service_orders')
       .delete()
       .eq('id', id);
 

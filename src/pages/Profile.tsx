@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useCustomization } from "@/contexts/CustomizationContext";
-import { User, Settings, CreditCard, Upload, Crown, Calendar } from "lucide-react";
+import { User, Settings, Upload, Calendar } from "lucide-react";
 
 const Profile = () => {
-  const { profile, organization } = useAuth();
+  const { profile } = useAuth();
   const { settings, updateSettings, uploadLogo } = useCustomization();
   const [atelierName, setAtelierName] = useState(settings?.atelier_name || '');
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -23,7 +22,8 @@ const Profile = () => {
     }
 
     if (logoFile) {
-      await uploadLogo(logoFile);
+      const logoUrl = await uploadLogo(logoFile);
+      await updateSettings({ logo_url: logoUrl });
       setLogoFile(null);
     }
   };
@@ -35,11 +35,6 @@ const Profile = () => {
     }
   };
 
-  const handleUpgradeClick = () => {
-    // TODO: Implementar sistema de pagamento
-    console.log('Upgrade clicked');
-  };
-
   return (
     <div className="space-y-6">
       <div>
@@ -48,7 +43,7 @@ const Profile = () => {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile">
             <User className="h-4 w-4 mr-2" />
             Perfil
@@ -56,10 +51,6 @@ const Profile = () => {
           <TabsTrigger value="customization">
             <Settings className="h-4 w-4 mr-2" />
             Customização
-          </TabsTrigger>
-          <TabsTrigger value="billing">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Assinatura
           </TabsTrigger>
           <TabsTrigger value="history">
             <Calendar className="h-4 w-4 mr-2" />
@@ -72,7 +63,7 @@ const Profile = () => {
             <CardHeader>
               <CardTitle>Informações Pessoais</CardTitle>
               <CardDescription>
-                Suas informações de perfil e da organização
+                Suas informações de perfil
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -94,22 +85,6 @@ const Profile = () => {
                     disabled
                     className="bg-muted"
                   />
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <Label>Organização</Label>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{organization?.name}</span>
-                  <Badge 
-                    variant={organization?.plan === 'enterprise' ? 'default' : 'secondary'}
-                    className={organization?.plan === 'enterprise' ? 'bg-gradient-to-r from-blue-600 to-purple-600' : ''}
-                  >
-                    {organization?.plan === 'enterprise' && <Crown className="h-3 w-3 mr-1" />}
-                    {organization?.plan === 'enterprise' ? 'Enterprise' : 'Gratuito'}
-                  </Badge>
                 </div>
               </div>
             </CardContent>
@@ -170,94 +145,22 @@ const Profile = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="billing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Plano e Assinatura</CardTitle>
-              <CardDescription>
-                Gerencie seu plano e informações de pagamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Plano Gratuito</CardTitle>
-                    <CardDescription>Plano atual</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Clientes</span>
-                        <span>50 máx.</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Usuários</span>
-                        <span>1 usuário</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Suporte</span>
-                        <span>Email</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-primary">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Crown className="h-5 w-5 text-primary" />
-                      Plano Enterprise
-                    </CardTitle>
-                    <CardDescription>Recomendado para negócios</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Clientes</span>
-                        <span>Ilimitado</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Usuários</span>
-                        <span>Ilimitado</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Suporte</span>
-                        <span>Prioritário</span>
-                      </div>
-                      <div className="text-2xl font-bold text-primary">
-                        R$ 49,90/mês
-                      </div>
-                    </div>
-                    <Button 
-                      className="w-full mt-4" 
-                      onClick={handleUpgradeClick}
-                    >
-                      Fazer Upgrade
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="history">
           <Card>
             <CardHeader>
-              <CardTitle>Histórico de Transações</CardTitle>
+              <CardTitle>Histórico do Sistema</CardTitle>
               <CardDescription>
-                Histórico de pagamentos e transações do sistema
+                Atividades e histórico de uso do sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
                 <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
-                  Nenhuma transação encontrada
+                  Nenhuma atividade encontrada
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Quando você realizar pagamentos, eles aparecerão aqui
+                  O histórico de atividades aparecerá aqui
                 </p>
               </div>
             </CardContent>

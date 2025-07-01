@@ -60,7 +60,7 @@ export const CustomizationProvider: React.FC<CustomizationProviderProps> = ({ ch
       if (data) {
         setSettings(data);
       } else {
-        // Create default settings if none exist
+        // Create default settings if none exist - single tenant doesn't need organization_id
         const defaultSettings = {
           atelier_name: 'Meu Atelier',
           primary_color: '#3b82f6'

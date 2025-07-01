@@ -6,7 +6,7 @@ import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { Crown, LogOut, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,7 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const { organization, profile, signOut } = useAuth();
+  const { profile, signOut } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -35,18 +35,6 @@ const Layout = ({ children }: LayoutProps) => {
           <header className="h-14 sm:h-16 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 sm:px-4">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="lg:hidden" />
-              {organization && (
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm">{organization.name}</span>
-                  <Badge 
-                    variant={organization.plan === 'enterprise' ? 'default' : 'secondary'}
-                    className={organization.plan === 'enterprise' ? 'bg-gradient-to-r from-blue-600 to-purple-600' : ''}
-                  >
-                    {organization.plan === 'enterprise' && <Crown className="h-3 w-3 mr-1" />}
-                    {organization.plan === 'enterprise' ? 'Enterprise' : 'Gratuito'}
-                  </Badge>
-                </div>
-              )}
             </div>
             
             <div className="flex items-center gap-1 sm:gap-2">
@@ -66,12 +54,6 @@ const Layout = ({ children }: LayoutProps) => {
                     <User className="mr-2 h-4 w-4" />
                     Perfil
                   </DropdownMenuItem>
-                  {organization?.plan === 'free' && (
-                    <DropdownMenuItem>
-                      <Crown className="mr-2 h-4 w-4" />
-                      Fazer Upgrade
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
