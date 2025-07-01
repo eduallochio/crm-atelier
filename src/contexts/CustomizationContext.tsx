@@ -2,14 +2,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './SupabaseAuthContext';
-import { useToast } from '@/components/ui/use-toast';
 
 interface CustomizationSettings {
   id: string;
-  organization_id: string;
   atelier_name: string;
   logo_url?: string;
-  primary_color?: string;
+  primary_color: string;
   created_at: string;
   updated_at: string;
 }
@@ -17,8 +15,8 @@ interface CustomizationSettings {
 interface CustomizationContextType {
   settings: CustomizationSettings | null;
   loading: boolean;
-  updateSettings: (data: Partial<CustomizationSettings>) => Promise<void>;
-  uploadLogo: (file: File) => Promise<void>;
+  updateSettings: (settings: Partial<CustomizationSettings>) => Promise<void>;
+  uploadLogo: (file: File) => Promise<string>;
 }
 
 const CustomizationContext = createContext<CustomizationContextType | undefined>(undefined);
@@ -31,27 +29,28 @@ export const useCustomization = () => {
   return context;
 };
 
-export const CustomizationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { organization, isAuthenticated } = useAuth();
-  const { toast } = useToast();
+interface CustomizationProviderProps {
+  children: ReactNode;
+}
+
+export const CustomizationProvider: React.FC<CustomizationProviderProps> = ({ children }) => {
+  const { user } = useAuth();
   const [settings, setSettings] = useState<CustomizationSettings | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (organization && isAuthenticated) {
-      loadSettings();
+    if (user) {
+      fetchSettings();
     }
-  }, [organization, isAuthenticated]);
+  }, [user]);
 
-  const loadSettings = async () => {
-    if (!organization) return;
-    
-    setLoading(true);
+  const fetchSettings = async () => {
+    if (!user) return;
+
     try {
       const { data, error } = await supabase
         .from('customization_settings')
         .select('*')
-        .eq('organization_id', organization.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -61,96 +60,72 @@ export const CustomizationProvider: React.FC<{ children: ReactNode }> = ({ child
       if (data) {
         setSettings(data);
       } else {
-        // Create default settings
+        // Create default settings if none exist
         const defaultSettings = {
-          organization_id: organization.id,
-          atelier_name: organization.name || 'Meu Atelier',
-          primary_color: '#3b82f6',
+          atelier_name: 'Meu Atelier',
+          primary_color: '#3b82f6'
         };
 
-        const { data: newSettings, error: createError } = await supabase
+        const { data: newData, error: insertError } = await supabase
           .from('customization_settings')
-          .insert(defaultSettings)
+          .insert([defaultSettings])
           .select()
           .single();
 
-        if (createError) throw createError;
-        setSettings(newSettings);
+        if (insertError) throw insertError;
+        setSettings(newData);
       }
     } catch (error) {
-      console.error('Error loading customization settings:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar configurações de customização",
-        variant: "destructive",
-      });
+      console.error('Error fetching customization settings:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateSettings = async (data: Partial<CustomizationSettings>) => {
-    if (!organization || !settings) return;
+  const updateSettings = async (newSettings: Partial<CustomizationSettings>) => {
+    if (!user || !settings) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('customization_settings')
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('organization_id', organization.id);
+        .update(newSettings)
+        .eq('id', settings.id)
+        .select()
+        .single();
 
       if (error) throw error;
-
-      setSettings(prev => prev ? { ...prev, ...data } : null);
-      toast({
-        title: "Sucesso",
-        description: "Configurações atualizadas com sucesso",
-      });
+      setSettings(data);
     } catch (error) {
-      console.error('Error updating settings:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar configurações",
-        variant: "destructive",
-      });
+      console.error('Error updating customization settings:', error);
+      throw error;
     }
   };
 
-  const uploadLogo = async (file: File) => {
-    if (!organization) return;
+  const uploadLogo = async (file: File): Promise<string> => {
+    if (!user) throw new Error('User not authenticated');
 
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${organization.id}/logo.${fileExt}`;
+    const fileExt = file.name.split('.').pop();
+    const fileName = `logo-${Date.now()}.${fileExt}`;
+    const filePath = `logos/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('organization-assets')
-        .upload(fileName, file, { upsert: true });
+    const { error: uploadError } = await supabase.storage
+      .from('organization-assets')
+      .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+    if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('organization-assets')
-        .getPublicUrl(fileName);
+    const { data } = supabase.storage
+      .from('organization-assets')
+      .getPublicUrl(filePath);
 
-      await updateSettings({ logo_url: publicUrl });
-    } catch (error) {
-      console.error('Error uploading logo:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao fazer upload da logo",
-        variant: "destructive",
-      });
-    }
+    return data.publicUrl;
   };
 
   const value = {
     settings,
     loading,
     updateSettings,
-    uploadLogo,
+    uploadLogo
   };
 
   return (

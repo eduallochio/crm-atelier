@@ -28,7 +28,6 @@ const AuthPage = () => {
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [organizationName, setOrganizationName] = useState('');
 
   useEffect(() => {
     if (isAuthenticated && !loading) {
@@ -55,7 +54,7 @@ const AuthPage = () => {
     setIsLoading(true);
     setError('');
     
-    const { error } = await signUp(signUpEmail, signUpPassword, fullName, organizationName);
+    const { error } = await signUp(signUpEmail, signUpPassword, fullName);
     
     if (error) {
       setError(error.message);
@@ -94,7 +93,7 @@ const AuthPage = () => {
               <div className="h-8 w-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">A</span>
               </div>
-              <span className="font-bold text-xl">Atelier SaaS</span>
+              <span className="font-bold text-xl">Atelier System</span>
             </div>
             <CardTitle>Bem-vindo!</CardTitle>
             <CardDescription>
@@ -164,17 +163,6 @@ const AuthPage = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="organization-name">Nome do Atelier</Label>
-                    <Input
-                      id="organization-name"
-                      type="text"
-                      value={organizationName}
-                      onChange={(e) => setOrganizationName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input
                       id="signup-email"
@@ -209,7 +197,7 @@ const AuthPage = () => {
                     disabled={isLoading}
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar Conta Grátis
+                    Criar Conta
                   </Button>
                 </form>
               </TabsContent>

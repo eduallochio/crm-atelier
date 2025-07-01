@@ -3,19 +3,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Organization {
-  id: string;
-  name: string;
-  slug: string;
-  plan: 'free' | 'enterprise';
-  stripe_customer_id?: string;
-  subscription_status?: string;
-  subscription_end_date?: string;
-}
-
 interface Profile {
   id: string;
-  organization_id: string;
   email: string;
   full_name?: string;
   role: string;
@@ -26,8 +15,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
-  organization: Organization | null;
-  signUp: (email: string, password: string, fullName: string, organizationName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
@@ -52,7 +40,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -63,13 +50,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile and organization
+          // Fetch user profile
           setTimeout(async () => {
             await fetchUserData(session.user.id);
           }, 0);
         } else {
           setProfile(null);
-          setOrganization(null);
         }
         
         setLoading(false);
@@ -102,24 +88,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (profileError) throw profileError;
       setProfile(profileData);
-
-      // Fetch organization
-      if (profileData?.organization_id) {
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .select('*')
-          .eq('id', profileData.organization_id)
-          .single();
-
-        if (orgError) throw orgError;
-        setOrganization(orgData);
-      }
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, organizationName: string) => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/dashboard`;
     
     const { error } = await supabase.auth.signUp({
@@ -128,8 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          full_name: fullName,
-          organization_name: organizationName
+          full_name: fullName
         }
       }
     });
@@ -153,7 +126,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     session,
     profile,
-    organization,
     signUp,
     signIn,
     signOut,

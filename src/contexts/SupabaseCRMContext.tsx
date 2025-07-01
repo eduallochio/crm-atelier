@@ -2,326 +2,237 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './SupabaseAuthContext';
-import { useToast } from '@/components/ui/use-toast';
 
-export interface Cliente {
+interface Client {
   id: string;
   nome: string;
   telefone: string;
   email?: string;
   endereco?: string;
   data_cadastro: string;
-  organization_id: string;
 }
 
-export interface Servico {
+interface Service {
   id: string;
   nome: string;
   tipo: string;
   valor: number;
   descricao?: string;
-  organization_id: string;
 }
 
-export interface OrdemServico {
+interface ServiceOrder {
   id: string;
   client_id: string;
-  cliente: Cliente;
-  status: 'pendente' | 'em_andamento' | 'concluida' | 'cancelada';
+  status: string;
   valor_total: number;
   data_abertura: string;
   data_prevista?: string;
   data_conclusao?: string;
   observacoes?: string;
-  organization_id: string;
+  client?: Client;
 }
 
-interface SupabaseCRMContextType {
-  clientes: Cliente[];
-  servicos: Servico[];
-  ordensServico: OrdemServico[];
+interface CRMContextType {
+  clients: Client[];
+  services: Service[];
+  serviceOrders: ServiceOrder[];
   loading: boolean;
-  
-  // Clientes
-  adicionarCliente: (cliente: Omit<Cliente, 'id' | 'data_cadastro' | 'organization_id'>) => Promise<void>;
-  atualizarCliente: (id: string, cliente: Partial<Cliente>) => Promise<void>;
-  excluirCliente: (id: string) => Promise<void>;
-  
-  // Serviços
-  adicionarServico: (servico: Omit<Servico, 'id' | 'organization_id'>) => Promise<void>;
-  atualizarServico: (id: string, servico: Partial<Servico>) => Promise<void>;
-  excluirServico: (id: string) => Promise<void>;
-  
-  // Ordens de Serviço
-  adicionarOrdemServico: (ordem: Omit<OrdemServico, 'id' | 'organization_id'>) => Promise<void>;
-  atualizarOrdemServico: (id: string, ordem: Partial<OrdemServico>) => Promise<void>;
-  excluirOrdemServico: (id: string) => Promise<void>;
-  
-  // Refresh data
+  addClient: (client: Omit<Client, 'id' | 'data_cadastro'>) => Promise<void>;
+  updateClient: (id: string, client: Partial<Client>) => Promise<void>;
+  deleteClient: (id: string) => Promise<void>;
+  addService: (service: Omit<Service, 'id'>) => Promise<void>;
+  updateService: (id: string, service: Partial<Service>) => Promise<void>;
+  deleteService: (id: string) => Promise<void>;
+  addServiceOrder: (order: Omit<ServiceOrder, 'id' | 'data_abertura'>) => Promise<void>;
+  updateServiceOrder: (id: string, order: Partial<ServiceOrder>) => Promise<void>;
+  deleteServiceOrder: (id: string) => Promise<void>;
   refreshData: () => Promise<void>;
 }
 
-const SupabaseCRMContext = createContext<SupabaseCRMContextType | undefined>(undefined);
+const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
-export const useSupabaseCRM = () => {
-  const context = useContext(SupabaseCRMContext);
+export const useCRM = () => {
+  const context = useContext(CRMContext);
   if (context === undefined) {
-    throw new Error('useSupabaseCRM must be used within a SupabaseCRMProvider');
+    throw new Error('useCRM must be used within a CRMProvider');
   }
   return context;
 };
 
-export const SupabaseCRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { organization, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [servicos, setServicos] = useState<Servico[]>([]);
-  const [ordensServico, setOrdensServico] = useState<OrdemServico[]>([]);
-  const [loading, setLoading] = useState(false);
+interface CRMProviderProps {
+  children: ReactNode;
+}
 
-  // Load data when organization is available
+export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) => {
+  const { user } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    if (organization && isAuthenticated) {
+    if (user) {
       refreshData();
     }
-  }, [organization, isAuthenticated]);
+  }, [user]);
 
   const refreshData = async () => {
-    if (!organization) return;
+    if (!user) return;
     
     setLoading(true);
     try {
-      await Promise.all([loadClientes(), loadServicos(), loadOrdensServico()]);
+      await Promise.all([
+        fetchClients(),
+        fetchServices(),
+        fetchServiceOrders()
+      ]);
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar dados",
-        variant: "destructive",
-      });
+      console.error('Error refreshing data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadClientes = async () => {
-    if (!organization) return;
-    
+  const fetchClients = async () => {
     const { data, error } = await supabase
-      .from('org_clients')
+      .from('clients')
       .select('*')
-      .eq('organization_id', organization.id)
+      .order('data_cadastro', { ascending: false });
+
+    if (error) throw error;
+    setClients(data || []);
+  };
+
+  const fetchServices = async () => {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
       .order('nome');
 
     if (error) throw error;
-    setClientes(data || []);
+    setServices(data || []);
   };
 
-  const loadServicos = async () => {
-    if (!organization) return;
-    
+  const fetchServiceOrders = async () => {
     const { data, error } = await supabase
-      .from('org_services')
-      .select('*')
-      .eq('organization_id', organization.id)
-      .order('nome');
-
-    if (error) throw error;
-    setServicos(data || []);
-  };
-
-  const loadOrdensServico = async () => {
-    if (!organization) return;
-    
-    const { data, error } = await supabase
-      .from('org_service_orders')
+      .from('service_orders')
       .select(`
         *,
-        cliente:org_clients(*)
+        client:clients(*)
       `)
-      .eq('organization_id', organization.id)
       .order('data_abertura', { ascending: false });
 
     if (error) throw error;
-    
-    const ordensFormatted = data?.map(ordem => ({
-      ...ordem,
-      cliente: ordem.cliente as Cliente,
-      status: (ordem.status || 'pendente') as 'pendente' | 'em_andamento' | 'concluida' | 'cancelada'
-    })) || [];
-    
-    setOrdensServico(ordensFormatted);
+    setServiceOrders(data || []);
   };
 
-  // CRUD Operations
-  const adicionarCliente = async (clienteData: Omit<Cliente, 'id' | 'data_cadastro' | 'organization_id'>) => {
-    if (!organization) throw new Error('Organization not found');
-    
+  const addClient = async (client: Omit<Client, 'id' | 'data_cadastro'>) => {
     const { error } = await supabase
-      .from('org_clients')
-      .insert({
-        ...clienteData,
-        organization_id: organization.id
-      });
+      .from('clients')
+      .insert([client]);
 
     if (error) throw error;
-    
-    await loadClientes();
-    toast({
-      title: "Sucesso",
-      description: "Cliente adicionado com sucesso",
-    });
+    await fetchClients();
   };
 
-  const atualizarCliente = async (id: string, clienteData: Partial<Cliente>) => {
+  const updateClient = async (id: string, client: Partial<Client>) => {
     const { error } = await supabase
-      .from('org_clients')
-      .update(clienteData)
+      .from('clients')
+      .update(client)
       .eq('id', id);
 
     if (error) throw error;
-    
-    await loadClientes();
-    toast({
-      title: "Sucesso",
-      description: "Cliente atualizado com sucesso",
-    });
+    await fetchClients();
   };
 
-  const excluirCliente = async (id: string) => {
+  const deleteClient = async (id: string) => {
     const { error } = await supabase
-      .from('org_clients')
+      .from('clients')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
-    
-    await loadClientes();
-    toast({
-      title: "Sucesso",
-      description: "Cliente excluído com sucesso",
-    });
+    await fetchClients();
   };
 
-  const adicionarServico = async (servicoData: Omit<Servico, 'id' | 'organization_id'>) => {
-    if (!organization) throw new Error('Organization not found');
-    
+  const addService = async (service: Omit<Service, 'id'>) => {
     const { error } = await supabase
-      .from('org_services')
-      .insert({
-        ...servicoData,
-        organization_id: organization.id
-      });
+      .from('services')
+      .insert([service]);
 
     if (error) throw error;
-    
-    await loadServicos();
-    toast({
-      title: "Sucesso",
-      description: "Serviço adicionado com sucesso",
-    });
+    await fetchServices();
   };
 
-  const atualizarServico = async (id: string, servicoData: Partial<Servico>) => {
+  const updateService = async (id: string, service: Partial<Service>) => {
     const { error } = await supabase
-      .from('org_services')
-      .update(servicoData)
+      .from('services')
+      .update(service)
       .eq('id', id);
 
     if (error) throw error;
-    
-    await loadServicos();
-    toast({
-      title: "Sucesso",
-      description: "Serviço atualizado com sucesso",
-    });
+    await fetchServices();
   };
 
-  const excluirServico = async (id: string) => {
+  const deleteService = async (id: string) => {
     const { error } = await supabase
-      .from('org_services')
+      .from('services')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
-    
-    await loadServicos();
-    toast({
-      title: "Sucesso",
-      description: "Serviço excluído com sucesso",
-    });
+    await fetchServices();
   };
 
-  const adicionarOrdemServico = async (ordemData: Omit<OrdemServico, 'id' | 'organization_id'>) => {
-    if (!organization) throw new Error('Organization not found');
-    
+  const addServiceOrder = async (order: Omit<ServiceOrder, 'id' | 'data_abertura'>) => {
     const { error } = await supabase
-      .from('org_service_orders')
-      .insert({
-        ...ordemData,
-        organization_id: organization.id
-      });
+      .from('service_orders')
+      .insert([order]);
 
     if (error) throw error;
-    
-    await loadOrdensServico();
-    toast({
-      title: "Sucesso",
-      description: "Ordem de serviço criada com sucesso",
-    });
+    await fetchServiceOrders();
   };
 
-  const atualizarOrdemServico = async (id: string, ordemData: Partial<OrdemServico>) => {
+  const updateServiceOrder = async (id: string, order: Partial<ServiceOrder>) => {
     const { error } = await supabase
-      .from('org_service_orders')
-      .update(ordemData)
+      .from('service_orders')
+      .update(order)
       .eq('id', id);
 
     if (error) throw error;
-    
-    await loadOrdensServico();
-    toast({
-      title: "Sucesso",
-      description: "Ordem de serviço atualizada com sucesso",
-    });
+    await fetchServiceOrders();
   };
 
-  const excluirOrdemServico = async (id: string) => {
+  const deleteServiceOrder = async (id: string) => {
     const { error } = await supabase
-      .from('org_service_orders')
+      .from('service_orders')
       .delete()
       .eq('id', id);
 
     if (error) throw error;
-    
-    await loadOrdensServico();
-    toast({
-      title: "Sucesso",
-      description: "Ordem de serviço excluída com sucesso",
-    });
+    await fetchServiceOrders();
   };
 
   const value = {
-    clientes,
-    servicos,
-    ordensServico,
+    clients,
+    services,
+    serviceOrders,
     loading,
-    adicionarCliente,
-    atualizarCliente,
-    excluirCliente,
-    adicionarServico,
-    atualizarServico,
-    excluirServico,
-    adicionarOrdemServico,
-    atualizarOrdemServico,
-    excluirOrdemServico,
+    addClient,
+    updateClient,
+    deleteClient,
+    addService,
+    updateService,
+    deleteService,
+    addServiceOrder,
+    updateServiceOrder,
+    deleteServiceOrder,
     refreshData
   };
 
   return (
-    <SupabaseCRMContext.Provider value={value}>
+    <CRMContext.Provider value={value}>
       {children}
-    </SupabaseCRMContext.Provider>
+    </CRMContext.Provider>
   );
 };
