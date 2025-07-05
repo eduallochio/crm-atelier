@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MetricCard from '@/components/MetricCard';
@@ -21,6 +22,12 @@ const Dashboard = () => {
   const totalRevenue = serviceOrders
     .filter(order => order.status === 'concluida')
     .reduce((sum, order) => sum + Number(order.valor_total), 0);
+
+  // Prepare chart data for orders by status
+  const chartData = [
+    { name: 'Pendentes', value: pendingOrders },
+    { name: 'Concluídas', value: completedOrders },
+  ];
 
   return (
     <div className="space-y-6">
@@ -86,7 +93,12 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <DashboardChart />
+        <DashboardChart
+          type="pie"
+          data={chartData}
+          title="Status das Ordens"
+          description="Distribuição das ordens por status"
+        />
       </div>
     </div>
   );
