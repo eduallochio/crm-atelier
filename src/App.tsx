@@ -6,9 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/SupabaseAuthContext";
 import { SupabaseCRMProvider } from "./contexts/SupabaseCRMContext";
-import { CustomizationProvider } from "./contexts/CustomizationContext";
 import { ThemeProvider } from "./components/ThemeProvider";
-import { NotificationProvider } from "./components/NotificationSystem";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import LandingPage from "./pages/LandingPage";
@@ -41,13 +39,9 @@ const App = () => (
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <SupabaseCRMProvider>
-                    <CustomizationProvider>
-                      <NotificationProvider>
-                        <Layout>
-                          <Dashboard />
-                        </Layout>
-                      </NotificationProvider>
-                    </CustomizationProvider>
+                    <Layout>
+                      <Dashboard />
+                    </Layout>
                   </SupabaseCRMProvider>
                 </ProtectedRoute>
               } />
@@ -55,13 +49,9 @@ const App = () => (
               <Route path="/clientes" element={
                 <ProtectedRoute>
                   <SupabaseCRMProvider>
-                    <CustomizationProvider>
-                      <NotificationProvider>
-                        <Layout>
-                          <Clientes />
-                        </Layout>
-                      </NotificationProvider>
-                    </CustomizationProvider>
+                    <Layout>
+                      <Clientes />
+                    </Layout>
                   </SupabaseCRMProvider>
                 </ProtectedRoute>
               } />
@@ -69,13 +59,9 @@ const App = () => (
               <Route path="/servicos" element={
                 <ProtectedRoute>
                   <SupabaseCRMProvider>
-                    <CustomizationProvider>
-                      <NotificationProvider>
-                        <Layout>
-                          <Servicos />
-                        </Layout>
-                      </NotificationProvider>
-                    </CustomizationProvider>
+                    <Layout>
+                      <Servicos />
+                    </Layout>
                   </SupabaseCRMProvider>
                 </ProtectedRoute>
               } />
@@ -83,13 +69,9 @@ const App = () => (
               <Route path="/ordens-servico" element={
                 <ProtectedRoute>
                   <SupabaseCRMProvider>
-                    <CustomizationProvider>
-                      <NotificationProvider>
-                        <Layout>
-                          <OrdensServico />
-                        </Layout>
-                      </NotificationProvider>
-                    </CustomizationProvider>
+                    <Layout>
+                      <OrdensServico />
+                    </Layout>
                   </SupabaseCRMProvider>
                 </ProtectedRoute>
               } />
@@ -97,13 +79,9 @@ const App = () => (
               <Route path="/financeiro" element={
                 <ProtectedRoute>
                   <SupabaseCRMProvider>
-                    <CustomizationProvider>
-                      <NotificationProvider>
-                        <Layout>
-                          <Financeiro />
-                        </Layout>
-                      </NotificationProvider>
-                    </CustomizationProvider>
+                    <Layout>
+                      <Financeiro />
+                    </Layout>
                   </SupabaseCRMProvider>
                 </ProtectedRoute>
               } />
@@ -111,13 +89,9 @@ const App = () => (
               <Route path="/caixa" element={
                 <ProtectedRoute>
                   <SupabaseCRMProvider>
-                    <CustomizationProvider>
-                      <NotificationProvider>
-                        <Layout>
-                          <Caixa />
-                        </Layout>
-                      </NotificationProvider>
-                    </CustomizationProvider>
+                    <Layout>
+                      <Caixa />
+                    </Layout>
                   </SupabaseCRMProvider>
                 </ProtectedRoute>
               } />
@@ -125,13 +99,9 @@ const App = () => (
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <SupabaseCRMProvider>
-                    <CustomizationProvider>
-                      <NotificationProvider>
-                        <Layout>
-                          <Profile />
-                        </Layout>
-                      </NotificationProvider>
-                    </CustomizationProvider>
+                    <Layout>
+                      <Profile />
+                    </Layout>
                   </SupabaseCRMProvider>
                 </ProtectedRoute>
               } />

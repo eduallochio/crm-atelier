@@ -37,6 +37,7 @@ interface CRMContextType {
   services: Service[];
   serviceOrders: ServiceOrder[];
   loading: boolean;
+  error: string | null;
   addClient: (client: Omit<Client, 'id' | 'data_cadastro'>) => Promise<void>;
   updateClient: (id: string, client: Partial<Client>) => Promise<void>;
   deleteClient: (id: string) => Promise<void>;
@@ -69,10 +70,13 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
   const [services, setServices] = useState<Service[]>([]);
   const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       refreshData();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -80,6 +84,8 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
     if (!user) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
       await Promise.all([
         fetchClients(),
@@ -88,42 +94,58 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
       ]);
     } catch (error) {
       console.error('Error refreshing data:', error);
+      setError('Erro ao carregar dados');
     } finally {
       setLoading(false);
     }
   };
 
   const fetchClients = async () => {
-    const { data, error } = await supabase
-      .from('org_clients')
-      .select('*')
-      .order('data_cadastro', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('org_clients')
+        .select('*')
+        .order('data_cadastro', { ascending: false });
 
-    if (error) throw error;
-    setClients(data || []);
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      throw error;
+    }
   };
 
   const fetchServices = async () => {
-    const { data, error } = await supabase
-      .from('org_services')
-      .select('*')
-      .order('nome');
+    try {
+      const { data, error } = await supabase
+        .from('org_services')
+        .select('*')
+        .order('nome');
 
-    if (error) throw error;
-    setServices(data || []);
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      throw error;
+    }
   };
 
   const fetchServiceOrders = async () => {
-    const { data, error } = await supabase
-      .from('org_service_orders')
-      .select(`
-        *,
-        client:org_clients(*)
-      `)
-      .order('data_abertura', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('org_service_orders')
+        .select(`
+          *,
+          client:org_clients(*)
+        `)
+        .order('data_abertura', { ascending: false });
 
-    if (error) throw error;
-    setServiceOrders(data || []);
+      if (error) throw error;
+      setServiceOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching service orders:', error);
+      throw error;
+    }
   };
 
   const addClient = async (client: Omit<Client, 'id' | 'data_cadastro'>) => {
@@ -218,6 +240,7 @@ export const SupabaseCRMProvider: React.FC<CRMProviderProps> = ({ children }) =>
     services,
     serviceOrders,
     loading,
+    error,
     addClient,
     updateClient,
     deleteClient,

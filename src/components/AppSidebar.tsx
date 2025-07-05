@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { 
   Users, 
   FileText, 
@@ -7,12 +6,9 @@ import {
   CreditCard, 
   Wallet, 
   Home,
-  LogOut,
   User
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/SupabaseAuthContext";
-import { useCustomization } from "@/contexts/CustomizationContext";
 
 import {
   Sidebar,
@@ -26,9 +22,7 @@ import {
   SidebarTrigger,
   useSidebar,
   SidebarHeader,
-  SidebarFooter
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -43,63 +37,61 @@ const menuItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { profile, signOut } = useAuth();
-  const { settings } = useCustomization();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
 
-  const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-primary/10 text-primary font-medium border-r-2 border-primary" : "hover:bg-accent/50";
+    isActive 
+      ? "bg-primary text-primary-foreground shadow-sm" 
+      : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100";
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
-      <SidebarHeader className="border-b p-4">
+    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
+      <SidebarHeader className="border-b bg-white/50 dark:bg-slate-900/50 p-6">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            {settings?.logo_url ? (
-              <img 
-                src={settings.logo_url} 
-                alt="Logo" 
-                className="h-8 w-8 object-contain"
-              />
-            ) : (
-              <Scissors className="h-8 w-8 text-primary" />
-            )}
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Scissors className="h-6 w-6 text-primary" />
+            </div>
             <div>
-              <h2 className="font-bold text-lg">
-                {settings?.atelier_name || 'Atelier CRM'}
+              <h2 className="font-bold text-lg text-slate-900 dark:text-white">
+                Atelier CRM
               </h2>
-              <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Sistema de Gestão</p>
             </div>
           </div>
         )}
         {collapsed && (
-          settings?.logo_url ? (
-            <img 
-              src={settings.logo_url} 
-              alt="Logo" 
-              className="h-8 w-8 object-contain mx-auto"
-            />
-          ) : (
-            <Scissors className="h-8 w-8 text-primary mx-auto" />
-          )
+          <div className="flex justify-center">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Scissors className="h-6 w-6 text-primary" />
+            </div>
+          </div>
         )}
       </SidebarHeader>
 
       <SidebarTrigger className="m-2 self-end" />
 
-      <SidebarContent>
+      <SidebarContent className="bg-white/30 dark:bg-slate-900/30">
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-slate-600 dark:text-slate-400 font-medium">
+            Menu Principal
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className={({ isActive }) => `
+                        flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200
+                        ${getNavCls({ isActive })}
+                      `}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      {!collapsed && <span className="font-medium">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -108,31 +100,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter className="border-t p-4">
-        {!collapsed && (
-          <div className="space-y-2">
-            <div className="text-sm">
-              <p className="font-medium">{profile?.full_name}</p>
-              <p className="text-xs text-muted-foreground">{profile?.email}</p>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={signOut}
-              className="w-full"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sair
-            </Button>
-          </div>
-        )}
-        {collapsed && (
-          <Button variant="outline" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
-        )}
-      </SidebarFooter>
     </Sidebar>
   );
 }

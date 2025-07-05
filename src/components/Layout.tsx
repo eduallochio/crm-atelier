@@ -4,7 +4,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import ThemeToggle from './ThemeToggle';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { LogOut, User } from 'lucide-react';
 import {
@@ -29,33 +28,32 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <AppSidebar />
         <main className="flex-1 flex flex-col">
-          <header className="h-14 sm:h-16 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 sm:px-4">
+          <header className="h-16 flex items-center justify-between border-b bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="lg:hidden" />
             </div>
             
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-3">
               <ThemeToggle />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800">
                     <User className="h-4 w-4" />
-                    <span className="hidden sm:inline">{profile?.full_name || profile?.email}</span>
+                    <span className="hidden sm:inline font-medium">
+                      {profile?.full_name || profile?.email?.split('@')[0] || 'Usuário'}
+                    </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel className="text-sm">
+                    {profile?.full_name || 'Minha Conta'}
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    Perfil
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600 dark:text-red-400">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sair
                   </DropdownMenuItem>
@@ -63,8 +61,10 @@ const Layout = ({ children }: LayoutProps) => {
               </DropdownMenu>
             </div>
           </header>
-          <div className="flex-1 p-3 sm:p-4 lg:p-6">
-            {children}
+          <div className="flex-1 p-6">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
           </div>
         </main>
       </div>
