@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MetricCard } from '@/components/MetricCard';
-import { DashboardChart } from '@/components/DashboardChart';
+import MetricCard from '@/components/MetricCard';
+import DashboardChart from '@/components/DashboardChart';
 import { useCRM } from '@/contexts/SupabaseCRMContext';
 import { Users, ShoppingBag, ClipboardList, DollarSign } from 'lucide-react';
 
