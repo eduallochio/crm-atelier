@@ -2,18 +2,20 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { cn } from "@/lib/utils";
 
 interface DashboardChartProps {
   type: 'bar' | 'line' | 'pie';
   data: any[];
   title: string;
   description: string;
+  className?: string;
   dataKey?: string;
   xAxisKey?: string;
   colors?: string[];
 }
 
-const DashboardChart = ({ type, data, title, description, dataKey = 'value', xAxisKey = 'name', colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }: DashboardChartProps) => {
+const DashboardChart = ({ type, data, title, description, className, dataKey = 'value', xAxisKey = 'name', colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }: DashboardChartProps) => {
   const renderChart = () => {
     switch (type) {
       case 'bar':
@@ -62,7 +64,7 @@ const DashboardChart = ({ type, data, title, description, dataKey = 'value', xAx
   };
 
   return (
-    <Card>
+    <Card className={cn("", className)}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>

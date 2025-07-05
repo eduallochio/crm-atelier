@@ -1,21 +1,23 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MetricCardProps {
   title: string;
   value: string | number;
   description: string;
   icon: LucideIcon;
+  className?: string;
   trend?: {
     value: number;
     isPositive: boolean;
   };
 }
 
-const MetricCard = ({ title, value, description, icon: Icon, trend }: MetricCardProps) => {
+const MetricCard = ({ title, value, description, icon: Icon, className, trend }: MetricCardProps) => {
   return (
-    <Card>
+    <Card className={cn("", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
