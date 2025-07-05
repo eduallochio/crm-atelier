@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,19 +7,18 @@ interface Profile {
   id: string;
   email: string;
   full_name?: string;
-  role: string;
-  is_owner: boolean;
+  organization_id?: string;
+  is_owner?: boolean;
+  role?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
-  isAuthenticated: boolean;
   loading: boolean;
+  isAuthenticated: boolean;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,28 +31,108 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchUserData = async (userId: string) => {
+    console.log('Fetching user data for:', userId);
+    try {
+      // Tentar buscar o perfil do usuário de forma mais simples para evitar recursão
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching user data:', error);
+        // Se houver erro de RLS, criar um perfil temporário baseado nos dados do usuário
+        if (error.code === '42P17') {
+          console.log('RLS recursion detected, creating temporary profile from user metadata');
+          const tempProfile: Profile = {
+            id: userId,
+            email: user?.email || '',
+            full_name: user?.user_metadata?.full_name || user?.email || '',
+            organization_id: undefined,
+            is_owner: false,
+            role: 'user'
+          };
+          setProfile(tempProfile);
+          return;
+        }
+        throw error;
+      }
+
+      if (data) {
+        setProfile(data);
+      } else {
+        console.log('No profile found, user may need to complete setup');
+        // Criar perfil temporário se não existir
+        const tempProfile: Profile = {
+          id: userId,
+          email: user?.email || '',
+          full_name: user?.user_metadata?.full_name || user?.email || '',
+          organization_id: undefined,
+          is_owner: false,
+          role: 'user'
+        };
+        setProfile(tempProfile);
+      }
+    } catch (error) {
+      console.error('Error in fetchUserData:', error);
+      // Fallback para perfil temporário em caso de erro
+      const fallbackProfile: Profile = {
+        id: userId,
+        email: user?.email || '',
+        full_name: user?.user_metadata?.full_name || user?.email || '',
+        organization_id: undefined,
+        is_owner: false,
+        role: 'user'
+      };
+      setProfile(fallbackProfile);
+    }
+  };
+
   useEffect(() => {
-    // Set up auth state listener
+    const initializeAuth = async () => {
+      console.log('Initializing auth...');
+      
+      try {
+        // Obter sessão atual
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+
+        if (currentSession?.user) {
+          await fetchUserData(currentSession.user.id);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // Configurar listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
+        
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          // Fetch user profile
-          setTimeout(async () => {
-            await fetchUserData(session.user.id);
-          }, 0);
+          await fetchUserData(session.user.id);
         } else {
           setProfile(null);
         }
@@ -62,80 +141,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const fetchUserData = async (userId: string) => {
-    try {
-      // Fetch profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (profileError) throw profileError;
-      setProfile(profileData);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
-
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const redirectUrl = `${window.location.origin}/dashboard`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName
-        }
-      }
-    });
-    
-    return { error };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    return { error };
-  };
-
   const signOut = async () => {
-    await supabase.auth.signOut();
+    console.log('Signing out...');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+    }
+    setUser(null);
+    setSession(null);
+    setProfile(null);
   };
 
   const value = {
     user,
     session,
     profile,
-    signUp,
-    signIn,
-    signOut,
+    loading,
     isAuthenticated: !!user,
-    loading
+    signOut,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

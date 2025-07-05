@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,22 +8,29 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useCRM, ContaFinanceira } from '@/contexts/CRMContext';
+import { useCRM } from '@/contexts/SupabaseCRMContext';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Search, Edit, Trash2, TrendingUp, TrendingDown, CheckCircle, Clock } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
+// Tipos locais para contas financeiras já que não estão no contexto Supabase
+interface ContaFinanceira {
+  id: string;
+  tipo: 'pagar' | 'receber';
+  descricao: string;
+  valor: number;
+  dataVencimento: string;
+  status: 'pendente' | 'paga';
+  dataPagamento?: string;
+  ordemServicoId?: string;
+}
+
 const Financeiro = () => {
-  const { 
-    contasFinanceiras, 
-    ordensServico,
-    adicionarContaFinanceira, 
-    atualizarContaFinanceira, 
-    excluirContaFinanceira,
-    adicionarMovimentoCaixa
-  } = useCRM();
+  const { serviceOrders } = useCRM();
   const { toast } = useToast();
   
+  // Estado local para contas financeiras (simulado)
+  const [contasFinanceiras, setContasFinanceiras] = useState<ContaFinanceira[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('todos');
   const [statusFiltro, setStatusFiltro] = useState('todos');
@@ -36,6 +44,32 @@ const Financeiro = () => {
     dataVencimento: '',
     ordemServicoId: ''
   });
+
+  // Funções simuladas para gerenciar contas financeiras
+  const adicionarContaFinanceira = (contaData: Omit<ContaFinanceira, 'id'>) => {
+    const novaConta: ContaFinanceira = {
+      ...contaData,
+      id: Math.random().toString(36).substr(2, 9)
+    };
+    setContasFinanceiras(prev => [...prev, novaConta]);
+  };
+
+  const atualizarContaFinanceira = (id: string, updates: Partial<ContaFinanceira>) => {
+    setContasFinanceiras(prev => 
+      prev.map(conta => 
+        conta.id === id ? { ...conta, ...updates } : conta
+      )
+    );
+  };
+
+  const excluirContaFinanceira = (id: string) => {
+    setContasFinanceiras(prev => prev.filter(conta => conta.id !== id));
+  };
+
+  const adicionarMovimentoCaixa = (movimento: any) => {
+    console.log('Movimento no caixa:', movimento);
+    // Implementar quando o sistema de caixa estiver disponível
+  };
 
   // Calcular resumos
   const contasReceber = contasFinanceiras.filter(c => c.tipo === 'receber');
@@ -271,9 +305,9 @@ const Financeiro = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">Nenhuma OS</SelectItem>
-                    {ordensServico.map((os) => (
+                    {serviceOrders.map((os) => (
                       <SelectItem key={os.id} value={os.id}>
-                        OS #{os.id.slice(-4)} - {os.cliente.nome}
+                        OS #{os.id.slice(-4)} - {os.client?.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>
