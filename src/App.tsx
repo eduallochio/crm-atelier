@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/SupabaseAuthContext";
 import { SupabaseCRMProvider } from "./contexts/SupabaseCRMContext";
+import { CRMProvider } from "./contexts/CRMContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
@@ -35,7 +36,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
               
-              {/* Protected routes */}
+              {/* Protected routes with Supabase CRM */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <SupabaseCRMProvider>
@@ -86,13 +87,14 @@ const App = () => (
                 </ProtectedRoute>
               } />
               
+              {/* Caixa route with local CRM context */}
               <Route path="/caixa" element={
                 <ProtectedRoute>
-                  <SupabaseCRMProvider>
+                  <CRMProvider>
                     <Layout>
                       <Caixa />
                     </Layout>
-                  </SupabaseCRMProvider>
+                  </CRMProvider>
                 </ProtectedRoute>
               } />
 
