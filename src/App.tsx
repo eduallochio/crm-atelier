@@ -9,7 +9,7 @@ import { SupabaseCRMProvider } from "./contexts/SupabaseCRMContext";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
-import LandingPage from "./pages/LandingPage";
+import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
@@ -32,7 +32,7 @@ const App = () => (
           <AuthProvider>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<Index />} />
               <Route path="/auth" element={<AuthPage />} />
               
               {/* Protected routes */}
